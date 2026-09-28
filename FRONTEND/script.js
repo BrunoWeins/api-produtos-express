@@ -38,8 +38,8 @@ class Produto {
     }
 }
 
-// URL da API
-const API_URL = "http://localhost:3000/produtos";
+// URL DA API ALTERADA PARA A VERCEL (Removido o localhost)
+const API_URL = "/api/produtos";
 
 // ADICIONAR PRODUTO
 document.getElementById("produto-form").addEventListener("submit", async function (e) {
@@ -50,7 +50,7 @@ document.getElementById("produto-form").addEventListener("submit", async functio
     const quantidade = document.getElementById("quantidade").value;
 
     try {
-        const novoProduto = new Produto(nome, preco, quantidade);
+        const novoProduto = new Produto(nome, preco, quantity);
 
         const resposta = await fetch(API_URL, {
             method: "POST",

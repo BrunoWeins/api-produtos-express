@@ -13,6 +13,10 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// CONFIGURAÇÃO DO ROUTER PARA A VERCEL
+const router = express.Router();
+app.use('/api', router);
+
 // Servir arquivos estáticos
 app.use(express.static('public'));
 
@@ -30,11 +34,11 @@ pool.query('SELECT NOW()')
    .catch(err => console.error('Erro de conexão com o Supabase:', err.stack));
 
 // -------------------------------------------------------------
-// ROTAS
+// ROTAS (Alteradas para usar o router)
 // -------------------------------------------------------------
 
 // ROTA GET: Busca todos os produtos
-app.get('/produtos', async (req, res) => {
+router.get('/produtos', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM produtos ORDER BY id ASC');
         res.json(result.rows);
@@ -45,7 +49,7 @@ app.get('/produtos', async (req, res) => {
 });
 
 // ROTA POST: Insere um novo produto
-app.post('/produtos', async (req, res) => {
+router.post('/produtos', async (req, res) => {
     const { nome, preco, quantidade } = req.body;
 
     const p = parseFloat(preco);
@@ -72,11 +76,11 @@ app.post('/produtos', async (req, res) => {
 });
 
 // ROTA DELETE (Individual)
-app.delete('/produtos/:id', async (req, res) => {
+router.delete('/produtos/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
-        const result = await pool.query('DELETE FROM produtos WHERE id = $1', [id]);
+        const result = await pool.query('DELETE FROM produtos WHERE id = \$1', [id]);
 
         if (result.rowCount === 0) {
             return res.status(404).json({ erro: 'Produto não encontrado' });
@@ -90,7 +94,7 @@ app.delete('/produtos/:id', async (req, res) => {
 });
 
 // ROTA DELETE (Em lote)
-app.delete('/produtos', async (req, res) => {
+router.delete('/produtos', async (req, res) => {
     try {
         await pool.query('DELETE FROM produtos');
         res.status(204).send();
@@ -103,7 +107,12 @@ app.delete('/produtos', async (req, res) => {
 // -------------------------------------------------------------
 // INICIALIZAÇÃO DO SERVIDOR
 // -------------------------------------------------------------
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Servidor backend rodando na porta ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+        console.log(`Servidor backend rodando localmente na porta ${PORT}`);
+    });
+}
+
+// Linha mais importante para a Vercel funcionar:
+module.exports = app;
