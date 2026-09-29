@@ -76,7 +76,7 @@ document.getElementById("produto-form").addEventListener("submit", async functio
 // BUSCAR PRODUTOS
 async function renderizarTabela() {
     try {
-        const resposta = await fetch(API_URL);
+        const resposta = await fetch(DATABASE_URL);
         const dadosBrutosDoServidor = await resposta.json();
 
         const tabela = document.querySelector("#tabela-produtos tbody");
