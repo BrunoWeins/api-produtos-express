@@ -52,7 +52,7 @@ document.getElementById("produto-form").addEventListener("submit", async functio
         // Correção do nome da variável (quantidade)
         const novoProduto = new Produto(nome, preco, quantidade);
 
-        const resposta = await fetch(DATABASE_URL, {
+        const resposta = await fetch(API_URL, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -76,7 +76,7 @@ document.getElementById("produto-form").addEventListener("submit", async functio
 // BUSCAR PRODUTOS
 async function renderizarTabela() {
     try {
-        const resposta = await fetch(DATABASE_URL);
+        const resposta = await fetch(API_URL);
         const dadosBrutosDoServidor = await resposta.json();
 
         const tabela = document.querySelector("#tabela-produtos tbody");
