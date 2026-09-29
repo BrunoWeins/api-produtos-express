@@ -28,7 +28,7 @@ class Produto {
         return this.#preco * this.#quantidade;
     }
 
-    // Método toJSON
+    // Método toJSON chamado automaticamente pelo JSON.stringify
     toJSON() {
         return {
             nome: this.nome,
@@ -38,7 +38,6 @@ class Produto {
     }
 }
 
-// URL DA API ALTERADA PARA A VERCEL (Removido o localhost)
 const API_URL = "/api/produtos";
 
 // ADICIONAR PRODUTO
@@ -50,14 +49,15 @@ document.getElementById("produto-form").addEventListener("submit", async functio
     const quantidade = document.getElementById("quantidade").value;
 
     try {
-        const novoProduto = new Produto(nome, preco, quantity);
+        // Correção do nome da variável (quantidade)
+        const novoProduto = new Produto(nome, preco, quantidade);
 
         const resposta = await fetch(API_URL, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(novoProduto.toJSON())
+            body: JSON.stringify(novoProduto) // Passando o objeto diretamente
         });
 
         if (!resposta.ok) {
@@ -76,18 +76,15 @@ document.getElementById("produto-form").addEventListener("submit", async functio
 // BUSCAR PRODUTOS
 async function renderizarTabela() {
     try {
-
         const resposta = await fetch(API_URL);
         const dadosBrutosDoServidor = await resposta.json();
 
         const tabela = document.querySelector("#tabela-produtos tbody");
-
         tabela.innerHTML = "";
 
         let totalAcumulado = 0;
 
         dadosBrutosDoServidor.forEach((dados) => {
-
             const produto = new Produto(
                 dados.nome,
                 dados.preco,
@@ -103,15 +100,16 @@ async function renderizarTabela() {
                 <td>R$ ${produto.preco.toFixed(2)}</td>
                 <td>${produto.quantidade}</td>
                 <td>R$ ${produto.valorTotal().toFixed(2)}</td>
-                <td>
-                    <button 
-                        class="btn-excluir"
-                        onclick="excluirProduto('${produto.nome}')">
-                        Excluir
-                    </button>
-                </td>
+                <td></td>
             `;
 
+            // Criação do botão via JS para evitar erros com aspas no nome
+            const btnExcluir = document.createElement("button");
+            btnExcluir.className = "btn-excluir";
+            btnExcluir.textContent = "Excluir";
+            btnExcluir.addEventListener("click", () => excluirProduto(produto.nome));
+
+            row.querySelector("td:last-child").appendChild(btnExcluir);
             tabela.appendChild(row);
         });
 
@@ -126,13 +124,11 @@ async function renderizarTabela() {
 
 // EXCLUIR UM PRODUTO
 async function excluirProduto(nome) {
-
     if (!confirm(`Deseja excluir o produto "${nome}"?`)) {
         return;
     }
 
     try {
-
         const resposta = await fetch(
             `${API_URL}/${encodeURIComponent(nome)}`,
             {
@@ -155,11 +151,8 @@ async function excluirProduto(nome) {
 
 // LIMPAR TODA A TABELA
 document.getElementById("limpar-tabela").addEventListener("click", async function () {
-
     if (confirm("Deseja mesmo limpar toda a tabela?")) {
-
         try {
-
             const resposta = await fetch(API_URL, {
                 method: "DELETE"
             });
