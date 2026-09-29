@@ -1,14 +1,15 @@
 {
-    "version": 2,
-    "rewrites": [
-      {
-        "source": "/api/(.*)",
-        "destination": "/BACKEND/server.js"
-      },
-      {
-        "source": "/(.*)",
-        "destination": "/FRONTEND/$1"
-      }
-    ]
-  }
-  
+  "version": 2,
+  "builds": [
+    {
+      "src": "BACKEND/server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "BACKEND/server.js"
+    }
+  ]
+}
