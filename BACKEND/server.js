@@ -9,35 +9,30 @@ const app = express();
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
-    allowedHeaders: ['Content-Type']
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
-// CONFIGURAÇÃO DO ROUTER PARA A VERCEL
+// Router para a Vercel
 const router = express.Router();
 app.use('/api', router);
 
-// Servir arquivos estáticos
+// Servir arquivos estáticos (para ambiente local)
 app.use(express.static('public'));
 
-// Configuração de conexão com PostgreSQL (Supabase)
+// Configuração do PostgreSQL (Supabase)
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
-        rejectUnauthorized: false // Exigido para conexão segura na nuvem
+        rejectUnauthorized: false
     }
 });
 
-// Testar a conexão com o banco
-pool.query('SELECT NOW()')
-   .then(() => console.log('Conectado com sucesso ao PostgreSQL (Supabase)'))
-   .catch(err => console.error('Erro de conexão com o Supabase:', err.stack));
-
 // -------------------------------------------------------------
-// ROTAS (Alteradas para usar o router)
+// ROTAS
 // -------------------------------------------------------------
 
-// ROTA GET: Busca todos os produtos
+// GET: Busca todos os produtos
 router.get('/produtos', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM produtos ORDER BY id ASC');
@@ -48,22 +43,23 @@ router.get('/produtos', async (req, res) => {
     }
 });
 
-// ROTA POST: Insere um novo produto
+// POST: Insere um novo produto
 router.post('/produtos', async (req, res) => {
     const { nome, preco, quantidade } = req.body;
 
     const p = parseFloat(preco);
     const q = parseInt(quantidade, 10);
 
-    if (!nome || isNaN(p) || isNaN(q) || p <= 0 || q <= 0) {
+    // Permite quantidade 0 (produto esgotado) e preço maior que 0
+    if (!nome || isNaN(p) || isNaN(q) || p <= 0 || q < 0) {
         return res.status(400).json({ erro: "Dados inválidos enviados para o servidor" });
     }
 
     try {
         const query = `
-           INSERT INTO produtos(nome, preco, quantidade)
-           VALUES($1, $2, $3)
-           RETURNING *
+            INSERT INTO produtos(nome, preco, quantidade)
+            VALUES($1, $2, $3)
+            RETURNING *
         `;
         const values = [nome, p, q];
         const result = await pool.query(query, values);
@@ -75,12 +71,12 @@ router.post('/produtos', async (req, res) => {
     }
 });
 
-// ROTA DELETE (Individual)
+// DELETE: Remove produto por ID
 router.delete('/produtos/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
-        const result = await pool.query('DELETE FROM produtos WHERE id = \$1', [id]);
+        const result = await pool.query('DELETE FROM produtos WHERE id = $1', [id]);
 
         if (result.rowCount === 0) {
             return res.status(404).json({ erro: 'Produto não encontrado' });
@@ -93,7 +89,7 @@ router.delete('/produtos/:id', async (req, res) => {
     }
 });
 
-// ROTA DELETE (Em lote)
+// DELETE: Limpa todos os produtos
 router.delete('/produtos', async (req, res) => {
     try {
         await pool.query('DELETE FROM produtos');
@@ -105,7 +101,7 @@ router.delete('/produtos', async (req, res) => {
 });
 
 // -------------------------------------------------------------
-// INICIALIZAÇÃO DO SERVIDOR
+// INICIALIZAÇÃO LOCAL
 // -------------------------------------------------------------
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 3000;
@@ -114,5 +110,4 @@ if (process.env.NODE_ENV !== 'production') {
     });
 }
 
-// Linha mais importante para a Vercel funcionar:
 module.exports = app;
