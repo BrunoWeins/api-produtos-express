@@ -1,19 +1,25 @@
 /**
- * MANTENDO A POO NO FRONTEND (ABSTRAÇÃO)
+ * POO NO FRONTEND (ABSTRAÇÃO COM ID INTEGRADO DO BANCO)
  */
 
 class Produto {
+    #id;
     #preco;
     #quantidade;
 
-    constructor(nome, preco, quantidade) {
-        if (!nome || preco <= 0 || quantidade <= 0) {
+    constructor(nome, preco, quantidade, id = null) {
+        if (!nome || preco <= 0 || quantidade < 0) {
             throw new Error("Dados inválidos para o produto");
         }
 
+        this.#id = id;
         this.nome = nome;
         this.#preco = parseFloat(preco);
-        this.#quantidade = parseInt(quantidade);
+        this.#quantidade = parseInt(quantidade, 10);
+    }
+
+    get id() {
+        return this.#id;
     }
 
     get preco() {
@@ -28,7 +34,6 @@ class Produto {
         return this.#preco * this.#quantidade;
     }
 
-    // Método toJSON chamado automaticamente pelo JSON.stringify
     toJSON() {
         return {
             nome: this.nome,
@@ -40,6 +45,11 @@ class Produto {
 
 const API_URL = "/api/produtos";
 
+// CARREGAR DADOS QUANDO O DOM ESTIVER PRONTO
+document.addEventListener("DOMContentLoaded", () => {
+    renderizarTabela();
+});
+
 // ADICIONAR PRODUTO
 document.getElementById("produto-form").addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -49,7 +59,6 @@ document.getElementById("produto-form").addEventListener("submit", async functio
     const quantidade = document.getElementById("quantidade").value;
 
     try {
-        // Correção do nome da variável (quantidade)
         const novoProduto = new Produto(nome, preco, quantidade);
 
         const resposta = await fetch(API_URL, {
@@ -57,7 +66,7 @@ document.getElementById("produto-form").addEventListener("submit", async functio
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(novoProduto) // Passando o objeto diretamente
+            body: JSON.stringify(novoProduto)
         });
 
         if (!resposta.ok) {
@@ -73,10 +82,15 @@ document.getElementById("produto-form").addEventListener("submit", async functio
 });
 
 
-// BUSCAR PRODUTOS
+// BUSCAR E EXIBIR PRODUTOS
 async function renderizarTabela() {
     try {
         const resposta = await fetch(API_URL);
+        
+        if (!resposta.ok) {
+            throw new Error("Erro ao carregar lista de produtos.");
+        }
+
         const dadosBrutosDoServidor = await resposta.json();
 
         const tabela = document.querySelector("#tabela-produtos tbody");
@@ -88,7 +102,8 @@ async function renderizarTabela() {
             const produto = new Produto(
                 dados.nome,
                 dados.preco,
-                dados.quantidade
+                dados.quantidade,
+                dados.id
             );
 
             totalAcumulado += produto.valorTotal();
@@ -103,11 +118,10 @@ async function renderizarTabela() {
                 <td></td>
             `;
 
-            // Criação do botão via JS para evitar erros com aspas no nome
             const btnExcluir = document.createElement("button");
             btnExcluir.className = "btn-excluir";
             btnExcluir.textContent = "Excluir";
-            btnExcluir.addEventListener("click", () => excluirProduto(produto.nome));
+            btnExcluir.addEventListener("click", () => excluirProduto(produto.id, produto.nome));
 
             row.querySelector("td:last-child").appendChild(btnExcluir);
             tabela.appendChild(row);
@@ -122,22 +136,24 @@ async function renderizarTabela() {
 }
 
 
-// EXCLUIR UM PRODUTO
-async function excluirProduto(nome) {
+// EXCLUIR PRODUTO POR ID
+async function excluirProduto(id, nome) {
+    if (!id) {
+        alert("Erro: ID do produto inválido.");
+        return;
+    }
+
     if (!confirm(`Deseja excluir o produto "${nome}"?`)) {
         return;
     }
 
     try {
-        const resposta = await fetch(
-            `${API_URL}/${encodeURIComponent(nome)}`,
-            {
-                method: "DELETE"
-            }
-        );
+        const resposta = await fetch(`${API_URL}/${id}`, {
+            method: "DELETE"
+        });
 
         if (!resposta.ok) {
-            throw new Error("Erro ao excluir produto.");
+            throw new Error("Erro ao excluir produto no servidor.");
         }
 
         renderizarTabela();
@@ -169,7 +185,3 @@ document.getElementById("limpar-tabela").addEventListener("click", async functio
         }
     }
 });
-
-
-// CARREGA OS DADOS AO ABRIR A PÁGINA
-renderizarTabela();
