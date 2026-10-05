@@ -13,29 +13,30 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Router para a Vercel
-const router = express.Router();
-app.use('/api', router);
-
-// Servir arquivos estáticos (para ambiente local)
-app.use(express.static('public'));
-
-// Configuração do PostgreSQL (Supabase)
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false
+// Gerenciamento de conexões reutilizáveis no modelo Serverless (Vercel)
+let pool;
+function getPool() {
+    if (!pool) {
+        pool = new Pool({
+            connectionString: process.env.DATABASE_URL,
+            ssl: {
+                rejectUnauthorized: false
+            },
+            max: 1
+        });
     }
-});
+    return pool;
+}
 
 // -------------------------------------------------------------
-// ROTAS
+// ROTAS DA API
 // -------------------------------------------------------------
 
 // GET: Busca todos os produtos
-router.get('/produtos', async (req, res) => {
+app.get('/api/produtos', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM produtos ORDER BY id ASC');
+        const client = getPool();
+        const result = await client.query('SELECT * FROM produtos ORDER BY id ASC');
         res.json(result.rows);
     } catch (erro) {
         console.error('Erro ao buscar produtos:', erro);
@@ -44,25 +45,24 @@ router.get('/produtos', async (req, res) => {
 });
 
 // POST: Insere um novo produto
-router.post('/produtos', async (req, res) => {
+app.post('/api/produtos', async (req, res) => {
     const { nome, preco, quantidade } = req.body;
 
     const p = parseFloat(preco);
     const q = parseInt(quantidade, 10);
 
-    // Permite quantidade 0 (produto esgotado) e preço maior que 0
     if (!nome || isNaN(p) || isNaN(q) || p <= 0 || q < 0) {
         return res.status(400).json({ erro: "Dados inválidos enviados para o servidor" });
     }
 
     try {
+        const client = getPool();
         const query = `
             INSERT INTO produtos(nome, preco, quantidade)
             VALUES($1, $2, $3)
             RETURNING *
         `;
-        const values = [nome, p, q];
-        const result = await pool.query(query, values);
+        const result = await client.query(query, [nome, p, q]);
 
         res.status(201).json(result.rows[0]);
     } catch (error) {
@@ -72,11 +72,12 @@ router.post('/produtos', async (req, res) => {
 });
 
 // DELETE: Remove produto por ID
-router.delete('/produtos/:id', async (req, res) => {
+app.delete('/api/produtos/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
-        const result = await pool.query('DELETE FROM produtos WHERE id = $1', [id]);
+        const client = getPool();
+        const result = await client.query('DELETE FROM produtos WHERE id = $1', [id]);
 
         if (result.rowCount === 0) {
             return res.status(404).json({ erro: 'Produto não encontrado' });
@@ -90,9 +91,10 @@ router.delete('/produtos/:id', async (req, res) => {
 });
 
 // DELETE: Limpa todos os produtos
-router.delete('/produtos', async (req, res) => {
+app.delete('/api/produtos', async (req, res) => {
     try {
-        await pool.query('DELETE FROM produtos');
+        const client = getPool();
+        await client.query('DELETE FROM produtos');
         res.status(204).send();
     } catch (error) {
         console.error('Erro ao limpar produtos:', error);
@@ -100,13 +102,11 @@ router.delete('/produtos', async (req, res) => {
     }
 });
 
-// -------------------------------------------------------------
-// INICIALIZAÇÃO LOCAL
-// -------------------------------------------------------------
+// Execução Local
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
-        console.log(`Servidor backend rodando localmente na porta ${PORT}`);
+        console.log(`Servidor rodando localmente na porta ${PORT}`);
     });
 }
 
