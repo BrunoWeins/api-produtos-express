@@ -1,162 +1,77 @@
-@import url('https://googleapis.com');
-
-body {
+/* --- BARRA DO USUÁRIO LOGADO --- */
+.bar-usuario {
     display: flex;
-    justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    margin: 0;
-    font-family: 'Fredoka', sans-serif;
-    /* Substituído por um gradiente suave de azul */
-    background: linear-gradient(135deg, #0369a1 0%, #334155 100%);
-    background-attachment: fixed;
-}
-
-.container {
-    width: 100%;
-    max-width: 500px;
-    background: #ffffff; /* Fundo totalmente branco para máximo contraste */
-    padding: 30px;
-    margin: 100px 20px 40px; /* Espaço para a foto flutuante */
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(14, 116, 144, 0.15); /* Sombra azulada sutil */
-    border: 1px solid #e0f2fe;
-    box-sizing: border-box;
-}
-
-.foto-perfil {
-    width: 140px;
-    height: 140px;
-    border-radius: 50%;
-    object-fit: cover;
-    display: block;
-    margin: -100px auto 20px; /* Faz a foto flutuar perfeitamente sobre a borda */
-    border: 6px solid #ffffff;
-    box-shadow: 0 8px 20px rgba(14, 116, 144, 0.2);
-    transition: transform 0.3s ease;
-}
-
-.foto-perfil:hover {
-    transform: scale(1.05); /* Efeito de zoom leve ao passar o mouse */
-}
-
-h1 {
-    text-align: center;
-    color: #0369a1; /* Azul Oceano Escuro */
-    margin-bottom: 25px;
-    font-weight: 600;
-}
-
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-label {
-    color: #0c4a6e; /* Azul Escuro Textos */
-    font-weight: 500;
-    font-size: 14px;
-    margin-bottom: -4px;
-}
-
-input {
-    padding: 12px;
-    font-size: 15px;
-    border: 2px solid #e0f2fe;
-    background-color: #f0f9ff; /* Fundo do input azul clarinho */
-    border-radius: 12px;
-    color: #0c4a6e;
-    font-family: 'Fredoka', sans-serif;
-    transition: all 0.3s ease;
-}
-
-input:focus {
-    outline: none;
-    border-color: #38bdf8; /* Brilha azul ao clicar */
-    background-color: #ffffff;
-    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15);
-}
-
-button[type="submit"] {
-    background: linear-gradient(135deg, #0ea5e9, #0284c7); /* Gradiente azul nos botões */
-    color: white;
-    font-family: 'Fredoka', sans-serif;
-    font-weight: 600;
-    padding: 14px;
-    font-size: 16px;
-    cursor: pointer;
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
-    transition: all 0.3s ease;
-}
-
-button[type="submit"]:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(14, 165, 233, 0.35);
-}
-
-#limpar-tabela {
-    width: 100%;
-    margin-top: 15px;
-    background-color: #f8fafc; /* Botão neutro e limpo */
-    color: #64748b;
-    font-family: 'Fredoka', sans-serif;
-    font-weight: 500;
-    border: 1px solid #e2e8f0;
-    padding: 10px;
-    font-size: 14px;
-    cursor: pointer;
+    justify-content: space-between;
+    background: #f8f9fa;
+    padding: 12px 20px;
     border-radius: 10px;
-    transition: all 0.2s ease;
+    border: 1px solid #e9ecef;
+    margin-bottom: 20px;
 }
 
-#limpar-tabela:hover {
-    background-color: #fee2e2; /* Fica vermelhinho sutil ao passar o mouse */
-    color: #ef4444;
-    border-color: #fca5a5;
+.bar-usuario p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #495057;
 }
 
-#total-estoque {
-    text-align: center;
-    color: #0369a1;
-    background-color: #e0f2fe;
-    padding: 12px;
-    border-radius: 12px;
-    margin: 25px 0 15px 0;
-    font-size: 16px;
+/* Botão de Sair (Logout) */
+#btn-logout {
+    background-color: #e63946;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    font-size: 0.85rem;
     font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
-table {
+#btn-logout:hover {
+    background-color: #d62828;
+    transform: translateY(-1px);
+}
+
+/* --- CAMPO SELECT (CLIENTE / ADMIN) --- */
+#reg-perfil {
     width: 100%;
-    border-collapse: separate; /* Permite arredondar os cantos da tabela */
-    border-spacing: 0;
-    margin-top: 15px;
-    border-radius: 12px;
-    overflow: hidden; /* Garante que os cantos continuem arredondados */
-    border: 1px solid #bae6fd;
-}
-
-th, td {
-    padding: 12px 10px;
-    text-align: center;
-    font-size: 14px;
-}
-
-td {
+    padding: 12px 14px;
+    margin-bottom: 15px;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: #495057;
     background-color: #ffffff;
-    color: #334155;
-    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-tr:last-child td {
-    border-bottom: none; /* Remove a linha do último item */
+#reg-perfil:focus {
+    border-color: #4c6ef5;
+    box-shadow: 0 0 0 3px rgba(76, 110, 245, 0.15);
 }
 
-th {
-    background-color: #0ea5e9; /* Azul vivo para o cabeçalho */
-    color: white;
-    font-weight: 500;
+/* --- LINKS E BOTÕES DE TROCA ENTRE LOGIN E CADASTRO --- */
+#secao-auth p {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+#link-ir-cadastro,
+#link-ir-login {
+    color: #4c6ef5;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+#link-ir-cadastro:hover,
+#link-ir-login:hover {
+    color: #364fc7;
+    text-decoration: underline;
 }
